@@ -44,6 +44,7 @@ PeridynamicsMesh::PeridynamicsMesh(const InputParameters & parameters)
     _total_bonds(declareRestartableData<unsigned int>("total_bonds")),
     _node_mesh_spacing(declareRestartableData<std::vector<Real>>("node_mesh_spacing")),
     _node_horizon(declareRestartableData<std::vector<Real>>("node_horizon")),
+    _node_weight_horizon(declareRestartableData<std::vector<Real>>("node_weight_horizon")),
     _node_vol(declareRestartableData<std::vector<Real>>("node_vol")),
     _node_horizon_vol(declareRestartableData<std::vector<Real>>("node_horizon_vol")),
     _node_blockID(declareRestartableData<std::vector<unsigned int>>("node_blockID")),
@@ -142,6 +143,7 @@ PeridynamicsMesh::createExtraPeridynamicsMeshData(MeshBase & fe_mesh)
   _node_coord.resize(_total_nodes);
   _node_mesh_spacing.resize(_total_nodes);
   _node_horizon.resize(_total_nodes);
+  _node_weight_horizon.resize(_total_nodes);
   _node_vol.resize(_total_nodes);
   _node_horizon_vol.resize(_total_nodes);
   _node_blockID.resize(_total_nodes);
@@ -171,6 +173,8 @@ PeridynamicsMesh::createExtraPeridynamicsMeshData(MeshBase & fe_mesh)
     _node_mesh_spacing[fe_elem->id()] = dist_sum / nneighbors;
     _node_horizon[fe_elem->id()] =
         (_has_horizon_number ? _horizon_number * dist_sum / nneighbors : _horizon_radius);
+    // assign an arbitrary number greater than horizon to weight horizon
+    _node_weight_horizon[fe_elem->id()] = 1.5 * _node_horizon[fe_elem->id()];
     _node_vol[fe_elem->id()] = fe_elem->volume();
     _node_horizon_vol[fe_elem->id()] = 0.0;
     _node_blockID[fe_elem->id()] = fe_elem->subdomain_id();
@@ -209,6 +213,10 @@ PeridynamicsMesh::createNodeHorizonBasedData()
     for (unsigned int j = 0; j < _total_nodes; ++j)
     {
       dis = (_node_coord[i] - _node_coord[j]).norm();
+      // refine to obtain the actual weight horizon
+      if (dis > 1.0001 * _node_horizon[i] && dis < _node_weight_horizon[i])
+        _node_weight_horizon[i] = dis;
+
       if (_node_blockID[i] == _node_blockID[j] && dis <= 1.0001 * _node_horizon[i] && j != i)
       {
         // check whether pdnode i falls in the region whose bonds may need to be removed due to the
@@ -365,6 +373,12 @@ Real
 PeridynamicsMesh::getHorizon(dof_id_type node_id)
 {
   return _node_horizon[node_id];
+}
+
+Real
+PeridynamicsMesh::getWeightHorizon(dof_id_type node_id)
+{
+  return _node_weight_horizon[node_id];
 }
 
 bool

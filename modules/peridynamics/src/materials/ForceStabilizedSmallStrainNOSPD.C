@@ -10,6 +10,8 @@
 #include "ForceStabilizedSmallStrainNOSPD.h"
 #include "RankFourTensor.h"
 
+#include "libmesh/utility.h"
+
 registerMooseObject("PeridynamicsApp", ForceStabilizedSmallStrainNOSPD);
 
 template <>
@@ -61,21 +63,19 @@ ForceStabilizedSmallStrainNOSPD::computeQpDeformationGradient()
         current_vec(k) = origin_vec(k) + _disp_var[k]->getNodalValue(*node_j) -
                          _disp_var[k]->getNodalValue(*current_node);
 
-      Real origin_length = origin_vec.norm();
+      Real weight = Utility::pow<3>(1 - origin_vec.norm() / _weight_horizon[_qp]);
       for (unsigned int k = 0; k < _dim; ++k)
       {
         for (unsigned int l = 0; l < _dim; ++l)
         {
-          _shape_tensor[_qp](k, l) +=
-              vol_j * _horizon[_qp] / origin_length * origin_vec(k) * origin_vec(l);
-          _deformation_gradient[_qp](k, l) +=
-              vol_j * _horizon[_qp] / origin_length * current_vec(k) * origin_vec(l);
+          _shape_tensor[_qp](k, l) += vol_j * weight * origin_vec(k) * origin_vec(l);
+          _deformation_gradient[_qp](k, l) += vol_j * weight * current_vec(k) * origin_vec(l);
         }
         // calculate derivatives of deformation_gradient w.r.t displacements of node i
-        _ddgraddu[_qp](0, k) += -vol_j * _horizon[_qp] / origin_length * origin_vec(k);
-        _ddgraddv[_qp](1, k) += -vol_j * _horizon[_qp] / origin_length * origin_vec(k);
+        _ddgraddu[_qp](0, k) += -vol_j * weight * origin_vec(k);
+        _ddgraddv[_qp](1, k) += -vol_j * weight * origin_vec(k);
         if (_dim == 3)
-          _ddgraddw[_qp](2, k) += -vol_j * _horizon[_qp] / origin_length * origin_vec(k);
+          _ddgraddw[_qp](2, k) += -vol_j * weight * origin_vec(k);
       }
     }
 
@@ -87,6 +87,6 @@ ForceStabilizedSmallStrainNOSPD::computeQpDeformationGradient()
 
   Real youngs_modulus = ElasticityTensorTools::getIsotropicYoungsModulus(_Cijkl[_qp]);
   _sf_coeff[_qp] = youngs_modulus * _pdmesh.getMeshSpacing(_current_elem->get_node(_qp)->id()) *
-                   _horizon[_qp] / _origin_length;
-  _multi[_qp] = _horizon[_qp] / _origin_length * _nv[0] * _nv[1];
+                   Utility::pow<3>(1 - _origin_length / _weight_horizon[_qp]);
+  _multi[_qp] = Utility::pow<3>(1 - _origin_length / _weight_horizon[_qp]) * _nv[0] * _nv[1];
 }

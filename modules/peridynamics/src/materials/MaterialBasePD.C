@@ -27,6 +27,7 @@ MaterialBasePD::MaterialBasePD(const InputParameters & parameters)
     _dim(_pdmesh.dimension()),
     _nnodes(2),
     _horizon(_nnodes),
+    _weight_horizon(_nnodes),
     _nv(_nnodes),
     _nvsum(_nnodes)
 {
@@ -42,6 +43,7 @@ MaterialBasePD::computeProperties()
   for (_qp = 0; _qp < _qrule->n_points(); ++_qp)
   {
     _horizon[_qp] = _pdmesh.getHorizon(_current_elem->get_node(_qp)->id());
+    _weight_horizon[_qp] = _pdmesh.getWeightHorizon(_current_elem->get_node(_qp)->id());
     _nv[_qp] = _pdmesh.getVolume(_current_elem->get_node(_qp)->id());
     _nvsum[_qp] = _pdmesh.getHorizonVolume(_current_elem->get_node(_qp)->id());
   }

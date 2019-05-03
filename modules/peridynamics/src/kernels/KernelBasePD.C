@@ -44,6 +44,7 @@ KernelBasePD::prepare()
   _dg_bond_vsum_ij.resize(_nnodes);
   _dg_node_vsum_ij.resize(_nnodes);
   _horizons_ij.resize(_nnodes);
+  _weight_horizons_ij.resize(_nnodes);
 
   for (unsigned int nd = 0; nd < _nnodes; ++nd)
   {
@@ -54,6 +55,7 @@ KernelBasePD::prepare()
     _dg_bond_vsum_ij[nd] = _pdmesh.getBondAssocHorizonVolume(_nodes_ij[nd]->id(), id_ji_in_ij);
     _dg_node_vsum_ij[nd] = _pdmesh.getBondAssocHorizonVolumeSum(_nodes_ij[nd]->id());
     _horizons_ij[nd] = _pdmesh.getHorizon(_nodes_ij[nd]->id());
+    _weight_horizons_ij[nd] = _pdmesh.getWeightHorizon(_nodes_ij[nd]->id());
   }
 
   _origin_vec_ij = *_nodes_ij[1] - *_nodes_ij[0];

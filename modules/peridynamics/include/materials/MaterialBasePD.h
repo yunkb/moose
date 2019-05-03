@@ -34,6 +34,7 @@ protected:
   const unsigned int _dim;
   const unsigned int _nnodes;
   std::vector<Real> _horizon;
+  std::vector<Real> _weight_horizon;
   std::vector<Real> _nv;
   std::vector<Real> _nvsum;
 

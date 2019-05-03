@@ -68,6 +68,7 @@ protected:
   std::vector<Real> _dg_bond_vsum_ij;
   std::vector<Real> _dg_node_vsum_ij;
   std::vector<Real> _horizons_ij;
+  std::vector<Real> _weight_horizons_ij;
   ///@}
 
   ///Vector for current bond under undefored configuration

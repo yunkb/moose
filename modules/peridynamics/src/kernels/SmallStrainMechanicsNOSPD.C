@@ -12,6 +12,8 @@
 #include "RankTwoTensor.h"
 #include "RankFourTensor.h"
 
+#include "libmesh/utility.h"
+
 registerMooseObject("PeridynamicsApp", SmallStrainMechanicsNOSPD);
 
 template <>
@@ -92,8 +94,9 @@ SmallStrainMechanicsNOSPD::computeNonlocalJacobian()
       RankTwoTensor dFdUk;
       dFdUk.zero();
       for (unsigned int j = 0; j < _dim; j++)
-        dFdUk(_component, j) =
-            _horizons_ij[cur_nd] / origin_vec_ijk.norm() * origin_vec_ijk(j) * vol_k;
+        dFdUk(_component, j) = origin_vec_ijk(j) * vol_k;
+      // Utility::pow<3>(1 - origin_vec_ijk.norm() / _weight_horizons_ij[cur_nd]) *
+      // origin_vec_ijk(j) * vol_k;
 
       dFdUk *= _shape[cur_nd].inverse();
 
@@ -204,8 +207,9 @@ SmallStrainMechanicsNOSPD::computePDNonlocalOffDiagJacobian(unsigned int jvar_nu
         RankTwoTensor dFdUk;
         dFdUk.zero();
         for (unsigned int j = 0; j < _dim; j++)
-          dFdUk(coupled_component, j) =
-              _horizons_ij[cur_nd] / origin_vec_ijk.norm() * origin_vec_ijk(j) * vol_k;
+          dFdUk(coupled_component, j) = origin_vec_ijk(j) * vol_k;
+        // Utility::pow<3>(1 - origin_vec_ijk.norm() / _weight_horizons_ij[cur_nd]) *
+        // origin_vec_ijk(j) * vol_k;
 
         dFdUk *= _shape[cur_nd].inverse();
 

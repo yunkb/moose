@@ -148,6 +148,8 @@ public:
    */
   Real getHorizon(dof_id_type node_id);
 
+  Real getWeightHorizon(dof_id_type node_id);
+
 protected:
   ///@{ Horizon size
   const Real _horizon_radius;
@@ -175,6 +177,7 @@ protected:
   std::vector<Point> _node_coord;
   std::vector<Real> & _node_mesh_spacing;
   std::vector<Real> & _node_horizon;
+  std::vector<Real> & _node_weight_horizon;
   std::vector<Real> & _node_vol;
   std::vector<Real> & _node_horizon_vol;
   std::vector<unsigned int> & _node_blockID;

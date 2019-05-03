@@ -12,6 +12,8 @@
 #include "RankTwoTensor.h"
 #include "RankFourTensor.h"
 
+#include "libmesh/utility.h"
+
 registerMooseObject("PeridynamicsApp", ForceStabilizedSmallStrainMechanicsNOSPD);
 
 template <>
@@ -111,7 +113,8 @@ ForceStabilizedSmallStrainMechanicsNOSPD::computeNonlocalJacobian()
       dFdUk.zero();
       for (unsigned int j = 0; j < _dim; ++j)
         dFdUk(_component, j) =
-            vol_k * _horizons_ij[cur_nd] / origin_vec_ijk.norm() * origin_vec_ijk(j);
+            Utility::pow<3>(1 - origin_vec_ijk.norm() / _weight_horizons_ij[cur_nd]) * vol_k *
+            origin_vec_ijk(j);
 
       dFdUk *= _shape[cur_nd].inverse();
       RankTwoTensor dSxdUkx =
@@ -201,7 +204,8 @@ ForceStabilizedSmallStrainMechanicsNOSPD::computePDNonlocalOffDiagJacobian(
         dFdUk.zero();
         for (unsigned int j = 0; j < _dim; ++j)
           dFdUk(coupled_component, j) =
-              _horizons_ij[cur_nd] / origin_vec_ijk.norm() * origin_vec_ijk(j) * vol_k;
+              Utility::pow<3>(1 - origin_vec_ijk.norm() / _weight_horizons_ij[cur_nd]) *
+              origin_vec_ijk(j) * vol_k;
 
         dFdUk *= _shape[cur_nd].inverse();
         RankTwoTensor dSxdUky =

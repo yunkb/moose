@@ -10,6 +10,7 @@
 #include "MaterialBaseNOSPD.h"
 
 #include "libmesh/quadrature.h"
+#include "libmesh/utility.h"
 
 template <>
 InputParameters
@@ -109,25 +110,26 @@ MaterialBaseNOSPD::computeQpDeformationGradient()
         cur_vec(k) = ori_vec(k) + _disp_var[k]->getNodalValue(*node_j) -
                      _disp_var[k]->getNodalValue(*cur_nd);
 
-      Real ori_len = ori_vec.norm();
+      Real weight = 1.0; // Utility::pow<3>(1 - ori_vec.norm() / _weight_horizon[_qp]);
       for (unsigned int k = 0; k < _dim; ++k)
       {
         for (unsigned int l = 0; l < _dim; ++l)
         {
-          _shape_tensor[_qp](k, l) += _horizon[_qp] / ori_len * ori_vec(k) * ori_vec(l) * vol_j;
-          _deformation_gradient[_qp](k, l) +=
-              _horizon[_qp] / ori_len * cur_vec(k) * ori_vec(l) * vol_j;
+          _shape_tensor[_qp](k, l) += weight * ori_vec(k) * ori_vec(l) * vol_j;
+          _deformation_gradient[_qp](k, l) += weight * cur_vec(k) * ori_vec(l) * vol_j;
         }
         // calculate derivatives of deformation_gradient w.r.t displacements of node i
-        _ddgraddu[_qp](0, k) += -_horizon[_qp] / ori_len * ori_vec(k) * vol_j;
-        _ddgraddv[_qp](1, k) += -_horizon[_qp] / ori_len * ori_vec(k) * vol_j;
+        _ddgraddu[_qp](0, k) += -weight * ori_vec(k) * vol_j;
+        _ddgraddv[_qp](1, k) += -weight * ori_vec(k) * vol_j;
         if (_dim == 3)
-          _ddgraddw[_qp](2, k) += -_horizon[_qp] / ori_len * ori_vec(k) * vol_j;
+          _ddgraddw[_qp](2, k) += -weight * ori_vec(k) * vol_j;
       }
     }
 
   // force state multiplier
-  _multi[_qp] = _horizon[_qp] / _origin_length * _nv[0] * _nv[1] * dgnodes_vsum / _nvsum[_qp];
+  // _multi[_qp] = Utility::pow<3>(1 - _origin_length / _weight_horizon[_qp]) * _nv[0] * _nv[1] *
+  //               dgnodes_vsum / _nvsum[_qp];
+  _multi[_qp] = _nv[0] * _nv[1] * dgnodes_vsum / _nvsum[_qp];
 
   // finalize the deformation gradient and its derivatives
   // for cases when current bond was broken, assign shape tensor and deformation gradient to unity
